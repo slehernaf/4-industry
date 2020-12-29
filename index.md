@@ -8,3 +8,9 @@
 
 [Четвёртая промышленная революция.docx](https://github.com/slehernaf/4-industry/files/5751003/default.docx)
 
+[Четвёртая промышленная революция.pdf](https://github.com/slehernaf/4-industry/files/5751157/default.pdf)
+
+
+
+
+
