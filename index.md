@@ -1,5 +1,27 @@
 ## Welcome to GitHub Pages
 
+### три решетки 
+
+## две решетки
+
+# решетка
+
+без решетки
+
+![2](https://user-images.githubusercontent.com/76738799/103290309-50bac080-49fa-11eb-997b-138d83663035.png)
+
+
+
+
+
+
+
+
+
+
+
+
+
 You can use the [editor on GitHub](https://github.com/slehernaf/4-industry/edit/gh-pages/index.md) to maintain and preview the content for your website in Markdown files.
 
 Whenever you commit to this repository, GitHub Pages will run [Jekyll](https://jekyllrb.com/) to rebuild the pages in your site, from the content in your Markdown files.
