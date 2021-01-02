@@ -10,12 +10,12 @@
 
 # [Реферат](https://slehernaf.github.io/4-industry/1)
 
-![d](http://s1845261037.utorrentgames.pro/templates/utorrentgames-new1/img/i5.png) [Четвёртая промышленная революция.docx](https://github.com/slehernaf/4-industry/files/5751003/default.docx)
+[![d](http://s1845261037.utorrentgames.pro/templates/utorrentgames-new1/img/i5.png) Четвёртая промышленная революция.docx](https://github.com/slehernaf/4-industry/files/5751003/default.docx)
 
-![d](http://s1845261037.utorrentgames.pro/templates/utorrentgames-new1/img/i5.png) [Четвёртая промышленная революция.pdf](https://github.com/slehernaf/4-industry/files/5751157/default.pdf)
+[![d](http://s1845261037.utorrentgames.pro/templates/utorrentgames-new1/img/i5.png) Четвёртая промышленная революция.pdf](https://github.com/slehernaf/4-industry/files/5751157/default.pdf)
 
 # [Отчет](https://slehernaf.github.io/4-industry/2)
 
-![d](http://s1845261037.utorrentgames.pro/templates/utorrentgames-new1/img/i5.png) [Отчет.docx](https://github.com/slehernaf/4-industry/files/5760803/default.docx)
+[![d](http://s1845261037.utorrentgames.pro/templates/utorrentgames-new1/img/i5.png) Отчет.docx](https://github.com/slehernaf/4-industry/files/5760803/default.docx)
 
-![d](http://s1845261037.utorrentgames.pro/templates/utorrentgames-new1/img/i5.png) [Отчет.pdf](https://github.com/slehernaf/4-industry/files/5760802/default.pdf)
+[![d](http://s1845261037.utorrentgames.pro/templates/utorrentgames-new1/img/i5.png) Отчет.pdf](https://github.com/slehernaf/4-industry/files/5760802/default.pdf)
