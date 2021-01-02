@@ -8,11 +8,11 @@
 
 Аналогичное действие было предпринято и для отчета по проделанной работе. 
 
-#[Реферат](https://slehernaf.github.io/4-industry/1)
+# [Реферат](https://slehernaf.github.io/4-industry/1)
 
 [Четвёртая промышленная революция.docx](https://github.com/slehernaf/4-industry/files/5751003/default.docx)
 
 [Четвёртая промышленная революция.pdf](https://github.com/slehernaf/4-industry/files/5751157/default.pdf)
 
-#[Отчет](https://slehernaf.github.io/4-industry/2)
+# [Отчет](https://slehernaf.github.io/4-industry/2)
 
