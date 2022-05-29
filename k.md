@@ -132,7 +132,8 @@ try:
         )
         print(f"Server version: {cursor.fetchone()}")
     with connection.cursor() as cursor:
-            cursor.executemany("INSERT INTO may (folder, data) VALUES(%s,%s)", values)
+# тут мы говорим вставить много данных в таблицу "scan" в столбцы "folder" и "data", взяв значения из переменной "values", импортируемой из файла "vali.py"
+            cursor.executemany("INSERT INTO scan (folder, data) VALUES(%s,%s)", values)
             print("[INFO] Data was successfully inserted")
 except Exception as _ex:
     print("[INFO] Error while working with PostgresSQL", _ex)
@@ -141,4 +142,73 @@ finally:
         connection.close()
         print("[INFO] PostgresSQL connection closed")
 ```
+Так себе вариант но рабочий, мы сначала через консоль запускаем ClamAV с записью логов, потом же парсим эти логи в промежуточный файл и записываем в БД используется всего 5 файлов: config.py, scan.log, parser.py, vali.py, sql.py, что не есть хорошо, и если мы могли исбавиться от первого файла то от остальных на данном этапе мы не могли распрощаться.
 ### Второй опыт
+
+В этот раз мы попробуем распрощаться со всеми не нужными файлами, оставив только sql.py как основной и config.py для удобства.
+В этот раз у нас не будет файла scan.log, значит данные нужно брать из потока, vali.py мы использоавли только для того чтобы автоматически формировать переменную нужного формата, мы избавимся от этого костыля, что долгое время не могли сделать.
+
+```
+import subprocess
+import psycopg2
+from config import host, user, password, db_name
+from ast import literal_eval
+
+# начало формирования переменной list типо char
+list = '('
+print('input the path to the folder or file')
+# просим указать путь и формируем команду для консоли
+cmd = "clamdscan -i " + input()
+# запускаем подпроцес под названием "process" который будет выполнять сканирование зааднного файла или папки, при этом будет произведена
+# запись вывода потока данных stdout и потока ошибок stderr, при чем данные будут в байтовом виде. stdout и stderr это стандартные потоки
+process = subprocess.Popen(cmd,shell=True,stdin=None,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+result = process.stdout.readlines()
+error = process.stderr.readlines()
+# если поток ошибок не нулевой, то есть при сканировании была ошибка, мы выводим эту ошибку и завершаем дальнейшие манипуляции 
+if len(error)!= 0:
+    print(error)
+    exit()
+# построчно считывааем поток данных stdout декодировав стандарным utf-8 в поисках даты и дальнейшем записью в переменную
+for line in result:
+   data = line.decode("utf-8")
+   if "End Date:" in data:
+    Dates = data[12:31]
+# делаем тоже самое, но уже ищем файлы с вирусной сигшнатурой и формируем аналогичную переменную, которая была в отдельном файле
+for line in result:
+   data = line.decode("utf-8")
+   if "FOUND" in data:
+       vali = data.split(': ')[0]
+       list = list + "(" + "'" + vali + "'" + "," + "'" + Dates + "'" "), "
+list = list + ')'
+# к сожелению если дать переменную list типа char на вход для записи в БД, то будет выдана ошибка, поэтому мы конвертируем переменную list типа char в
+# list типа tuple (кортеж) с которым спокойно работает метод executemany в psycapg2
+# мы используем кортеж, а не список по двум причина, первая это кортеж быстрее, вторая это кортеж нельзя изменять в отличии от спика, что добавляет немного
+# безопасности всему процессу передачи, немного конечно, но лучше так, чем вообще никак
+list = literal_eval(list)
+
+
+try:
+    connection = psycopg2.connect(
+        host=host,
+        user=user,
+        password=password,
+        database=db_name
+    )
+    connection.autocommit = True
+    with connection.cursor() as cursor:
+        cursor.execute(
+            "SELECT version();"
+        )
+        print(f"Server version: {cursor.fetchone()}")
+    with connection.cursor() as cursor:
+            cursor.executemany("INSERT INTO scan (folder, data) VALUES(%s, %s)", list)
+            print("[INFO] Data was successfully inserted")
+except Exception as _ex:
+    print("[INFO] Error while working with PostgresSQL", _ex)
+finally:
+    if connection:
+        connection.close()
+        print("[INFO] PostgresSQL connection closed")
+```
+
+Это даже не винальная версия
