@@ -211,4 +211,56 @@ finally:
         print("[INFO] PostgresSQL connection closed")
 ```
 
-Это даже не винальная версия
+Это даже не винальная версия, как вы могли заметить мы два раза перебираем выходные данные, чтобы найти дату и время, после чего ищем все найденные файлы с вирусной сигнатурой и формирвем переменную, нам не особо понравилось что приходится дважды проходиться по данным, поэтому мы решили что нам нужно самим формировать переменную Dates, чтобы избавиться от лишнего прохода по файлу, это мы и реализовали в финальной версии на данный момент "своеобразного коннектора" для ClamAV и PostgreSQL выглядит так:
+```
+import subprocess
+import psycopg2
+import datetime
+from config import host, user, password, db_name
+from ast import literal_eval
+
+list = '('
+print('input the path to the folder or file')
+cmd = "clamdscan -i " + input()
+process = subprocess.Popen(cmd,shell=True,stdin=None,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+result = process.stdout.readlines()
+error = process.stderr.readlines()
+if len(error)!= 0:
+    print(error)
+    exit()
+# берем значение даты с машины, мы берем, год, месяц, день, час, минуты, секунду и милисекунду на момент выполнения запроса и записываем в переменную Dates
+Dates = datetime.datetime.now()
+# Переводим переменную Dates в переменную типа str форматируя ее таким образом чтобы выводился "год:месяц:день час:минута:секунда" 
+Dates = Dates.strftime("%Y:%m:%d %H:%M:%S")
+
+for line in result:
+   data = line.decode("utf-8")
+   if "FOUND" in data:
+       vali = data.split(': ')[0]
+       list = list + "(" + "'" + vali + "'" + "," + "'" + Dates + "'" "), "
+list = list + ')'
+list = literal_eval(list)
+
+try:
+    connection = psycopg2.connect(
+        host=host,
+        user=user,
+        password=password,
+        database=db_name
+    )
+    connection.autocommit = True
+    with connection.cursor() as cursor:
+        cursor.execute(
+            "SELECT version();"
+        )
+        print(f"Server version: {cursor.fetchone()}")
+    with connection.cursor() as cursor:
+            cursor.executemany("INSERT INTO scan (folder, data) VALUES(%s, %s)", list)
+            print("[INFO] Data was successfully inserted")
+except Exception as _ex:
+    print("[INFO] Error while working with PostgresSQL", _ex)
+finally:
+    if connection:
+        connection.close()
+        print("[INFO] PostgresSQL connection closed")
+```
