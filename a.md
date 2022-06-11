@@ -383,18 +383,15 @@ import psycopg2
 import datetime
 from ast import literal_eval
 
-
 host = "127.0.0.1"
 user = "postgres"
 password = "clamav"
 db_name = "virus"
 
-
 list= ''
 sc_browse = ''
 log_browse = ''
 infested_browse = ''
-
 
 ws = Tk()
 png = PhotoImage(file='loki.png')
@@ -479,12 +476,10 @@ def scan():
         if cb0.get() == 1:
             cmd = cmd + ' -l ' + log_browse.replace(' ', '\ ').replace('(','\(').replace(')','\)') + '/scan.log'
         cmd = cmd + ' ' + sc_browse.replace(' ', '\ ').replace('(','\(').replace(')','\)')
-        print(cmd)
         process = subprocess.Popen(cmd, shell=True, stdin=None, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         result = process.stdout.readlines()
         error = process.stderr.readlines()
         if len(error) != 0:
-            print(error)
             mb.showerror("Ошибка", error)
             return
         Dates = datetime.datetime.now()
@@ -498,7 +493,6 @@ def scan():
                 list = list + "(" + "'" + vali + "'" + "," + "'" + Dates + "'" "), "
         list = list + ')'
         list = literal_eval(list)
-        print(list)
         lb['text'] = "Сканирование успешно завершено"
         mb.showwarning("Найденные вирусы",ss)
         psql = mb.askyesno("PostgreSQL","Записать найденные вирусы в базу данных?")
@@ -520,16 +514,13 @@ def scan():
                     print(f"Server version: {cursor.fetchone()}")
                 with connection.cursor() as cursor:
                     cursor.executemany("INSERT INTO scan (folder, data) VALUES(%s, %s)", list)
-                    print("[INFO] Data was successfully inserted")
                     lb['text'] = "Data was successfully inserted"
             except Exception as _ex:
-                print("[INFO] Error while working with PostgresSQL", _ex)
                 mb.showerror("Error while working with PostgresSQL", _ex)
             finally:
                 if connection:
                     connection.close()
-                    print("[INFO] PostgresSQL connection closed")
-
+                    
 cb0 = IntVar()
 cb1 = IntVar()
 cb2 = IntVar()
