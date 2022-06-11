@@ -403,10 +403,12 @@ ws.config(bg='#e12e39')
 ws.title('ClamAv connector app')
 ws.geometry('1000x600+260+70')
 
+# Открываем диалоговое окно для записи адреса папки, в которую будем сохранять логи
 def log_browse():
     global log_browse
     log_browse = filedialog.askdirectory()
 
+# Открываем диалоговое окно для записи адреса папки или файла, которые необходимо сканировать
 def scan_browse():
     global sc_browse
     if rbt.get() == 0:
@@ -414,6 +416,7 @@ def scan_browse():
     elif rbt.get() == 1:
         sc_browse = filedialog.askopenfilename()
 
+# Проверяем статус флагов и в зависимости от их статуса активируем или диактивируем часть кнопок, и переименовываем их
 def isChecked():
     global log_browse, infested_browse
 
@@ -438,10 +441,12 @@ def isChecked():
         btn2.configure(text='Выберете "Перемещать инфицированные файлы в указанную папку"')
         cbt1['state'] = NORMAL
 
+# Открываем диалоговое окно для записи адреса папки, в которую будут перенесены все просканированные файлы, которые имею вирусную сигнатуру
 def infest_browse():
     global infested_browse
     infested_browse= filedialog.askdirectory()
 
+# Формируем запрос сканирования, проверяем корректность его формирования и выводим ошибки и основную информацию в сплывающих окнах
 def scan():
     lb['text'] = "Идет сканирование..."
     global list, sc_browse, log_browse, infested_browse
@@ -496,9 +501,11 @@ def scan():
                 list = list + "(" + "'" + vali + "'" + "," + "'" + Dates + "'" "), "
         list = list + ')'
         list = literal_eval(list)
+# Выводим сообщение об успешном сканировании и список найденых файлов с вирусной сигнатурой в всплывающем окне
         lb['text'] = "Сканирование успешно завершено"
         mb.showwarning("Найденные вирусы",ss)
         psql = mb.askyesno("PostgreSQL","Записать найденные вирусы в базу данных?")
+# Создаем диалоговое окно в котором спрашиваем хочет ли пользователь внести резкльтаты сканирования в базу данных 
         if psql == False:
             return
         else:
@@ -524,24 +531,29 @@ def scan():
                 if connection:
                     connection.close()
                     
+# Создаем переменные состояния флагов и радиокнопок                    
 cb0 = IntVar()
 cb1 = IntVar()
 cb2 = IntVar()
 rbt = IntVar()
 
+# Создаем флаги в окне визуальной оболочки и првиязываем их к функции проверки состояиния 
 cbt0 = Checkbutton(ws, text="Сохранить лог файл?", variable=cb0, onvalue=1, offvalue=0, command=isChecked, bg='#0EDBE2')
 cbt1 = Checkbutton(ws, text="Удалять все инфицированные файлы?", variable=cb1, onvalue=1, offvalue=0, command=isChecked, bg='#0EDBE2')
 cbt2 = Checkbutton(ws, text="Перемещать инфицированные файлы в указанную папку?", variable=cb2, onvalue=1, offvalue=0, command=isChecked, bg='#0EDBE2')
 
+# Создаем кнопки в окне визуальной оболочки и привязываем их к тем или иным функциям
 btn0 = Button(ws, text='Выберете "Сохранить лог файл"', state=DISABLED, command=log_browse, bg='#0EDBE2')
 btn1 = Button(ws, text='Выберете путь', command=scan_browse, bg='#0EDBE2')
 btn2 = Button(ws, text='Выберете "Перемещать инфицированные файлы в указанную папку"', state=DISABLED, command=infest_browse, bg='#0EDBE2')
 btn3 = Button(ws, text='Scaning', command=scan, bg='#0EDBE2', relief=RAISED, bd=0)
 
+# Создаем радиокнопки в окне визуальной оболочки
 rbt0 = Radiobutton(text="Папку с вложенными папками", value=0, variable=rbt, bg='#0EDBE2')
 rbt1 = Radiobutton(text="Один файл", value=1, variable=rbt, bg='#0EDBE2')
 
-lb = Label(ws, text='asdsddd', bg='#e12e39')
+# Расставляем все визуальные эллементы внутри окна визуальной оболочки
+lb = Label(ws, text='...', bg='#e12e39')
 lb0 = Label(ws, text=' \n \n \n \n \n', bg='#e12e39')
 cbt0.grid(row=0, column=1)
 cbt1.grid(row=1, column=1)
@@ -556,5 +568,7 @@ btn2.grid(row=2, column=0)
 btn3.grid(row=3, column=0)
 lb0.grid(row=5, column=0)
 lb.grid(row=6, column=0)
+
+# Создаем бесконечный цикл, благодоря которому созданное окно не будет автоматичеки закрываться
 ws.mainloop()
 ```
