@@ -572,3 +572,194 @@ lb.grid(row=6, column=0)
 # Создаем бесконечный цикл, благодоря которому созданное окно не будет автоматичеки закрываться
 ws.mainloop()
 ```
+
+```
+from tkinter import filedialog
+from tkinter import *
+import tkinter.messagebox as mb
+import subprocess
+import psycopg2
+import datetime
+from ast import literal_eval
+
+
+host = "127.0.0.1"
+user = "postgres"
+password = "clamav"
+db_name = "virus"
+
+
+list= ''
+sc_browse = ''
+log_browse = ''
+infested_browse = ''
+
+bg = bg_button_colour = '#aa797c'
+bg_app_colour = '#dabb3e'
+ws = Tk()
+png = PhotoImage(file='loki.png')
+ws.iconphoto(False, png)
+ws.config(bg = bg_app_colour)
+ws.title('ClamAv connector app')
+ws.geometry('1000x600+260+70')
+
+def log_browse():
+    global log_browse
+    log_browse = filedialog.askdirectory(title='Выберете папку для сохранения логов "scan.log":', initialdir = '~')
+
+def scan_browse():
+    global sc_browse
+    if rbt.get() == 0:
+        sc_browse = filedialog.askdirectory(title='Выберете папку для сканирования:', initialdir = '~')
+    elif rbt.get() == 1:
+        sc_browse = filedialog.askopenfilename(title='Выберете файл для сканирования:', initialdir = '~')
+
+def isChecked():
+    global log_browse, infested_browse
+    if cb0.get() == 1:
+        btn0['state'] = NORMAL
+        btn0.configure(text='Путь логов')
+    elif cb0.get() == 0:
+        btn0['state'] = DISABLED
+        btn0.configure(text='Выберете "Сохранить лог файл"')
+
+    if cb1.get() == 1:
+        cbt2['state']= DISABLED
+    elif cb1.get() == 0:
+        cbt2['state'] = NORMAL
+
+    if cb2.get() == 1:
+        btn2['state'] = NORMAL
+        btn2.configure(text='Путь папки, для перемещения инфицированных файлов')
+        cbt1['state']= DISABLED
+    elif cb2.get() == 0:
+        btn2['state'] = DISABLED
+        btn2.configure(text='Выберете "Перемещать инфицированные файлы в указанную папку"')
+        cbt1['state'] = NORMAL
+
+def infest_browse():
+    global infested_browse
+    infested_browse= filedialog.askdirectory(title='Выберете папку для переноса зараженных файлов:', initialdir = '~')
+
+def scan():
+    lb['text'] = "Идет сканирование..."
+    global list, sc_browse, log_browse, infested_browse
+    if type(sc_browse) != str or sc_browse=='':
+        mb.showerror("Ошибка", "Не выбран путь сканирования")
+        lb['text'] = "..."
+        return
+    msg = 'Будет сканироваться:'+sc_browse+'\n'
+    if cb0.get() ==1:
+        if type(log_browse) != str or log_browse == '' :
+            mb.showerror("Ошибка", "Не выбран путь сохранения логов сканирования")
+            lb['text'] = "..."
+            return
+        msg = msg + 'Логи будут сохранены в:' + log_browse + '/scan.log' + '\n'
+    if cb2.get() == 1:
+        if type(infested_browse) != str or infested_browse == '':
+            mb.showerror("Ошибка", "Не выбран путь для перемещения инфицированных файлов")
+            lb['text'] = "..."
+            return
+        msg = msg + 'Вирусные файлы будут перемещены в:'+ infested_browse+ '\n'
+    if cb1.get() == 1:
+        msg = msg + 'Найденные вирусы будут удалены'+'\n'
+    mb.showinfo("Информация", msg)
+    quest = mb.askyesno("ClamAV Scanning", "Вы уверены что хотите сканировать с данными параметрами?")
+    if quest == False:
+        lb['text'] = "..."
+        return
+    else:
+        list = '('
+        cmd = "clamdscan -i "
+        if cb2.get() == 1:
+            cmd = cmd + ' --move ' + infested_browse.replace(' ', '\ ').replace('(','\(').replace(')','\)')
+        if cb1.get() == 1:
+            cmd = cmd + ' --remove'
+        if cb0.get() == 1:
+            cmd = cmd + ' -l ' + log_browse.replace(' ', '\ ').replace('(','\(').replace(')','\)') + '/scan.log'
+        cmd = cmd + ' ' + sc_browse.replace(' ', '\ ').replace('(','\(').replace(')','\)')
+        print(cmd)
+        process = subprocess.Popen(cmd, shell=True, stdin=None, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        result = process.stdout.readlines()
+        error = process.stderr.readlines()
+        if len(error) != 0:
+            print(error)
+            mb.showerror("Ошибка", error)
+            return
+        Dates = datetime.datetime.now()
+        Dates = Dates.strftime("%Y:%m:%d %H:%M:%S")
+        ss =''
+        for line in result:
+            data = line.decode("utf-8")
+            if "FOUND" in data:
+                vali = data.split(': ')[0]
+                ss = ss + vali + "\n"
+                list = list + "(" + "'" + vali + "'" + "," + "'" + Dates + "'" "), "
+        list = list + ')'
+        list = literal_eval(list)
+        print(list)
+        lb['text'] = "Сканирование успешно завершено"
+        mb.showwarning("Найденные вирусы",ss)
+        psql = mb.askyesno("PostgreSQL","Записать найденные вирусы в базу данных?")
+        if psql == False:
+            return
+        else:
+            try:
+                connection = psycopg2.connect(
+                    host=host,
+                    user=user,
+                    password=password,
+                    database=db_name
+                )
+                connection.autocommit = True
+                with connection.cursor() as cursor:
+                    cursor.execute(
+                        "SELECT version();"
+                    )
+                    print(f"Server version: {cursor.fetchone()}")
+                with connection.cursor() as cursor:
+                    cursor.executemany("INSERT INTO scan (folder, data) VALUES(%s, %s)", list)
+                    print("[INFO] Data was successfully inserted")
+                    lb['text'] = "Data was successfully inserted"
+            except Exception as _ex:
+                print("[INFO] Error while working with PostgresSQL", _ex)
+                mb.showerror("Error while working with PostgresSQL", _ex)
+            finally:
+                if connection:
+                    connection.close()
+                    print("[INFO] PostgresSQL connection closed")
+
+cb0 = IntVar()
+cb1 = IntVar()
+cb2 = IntVar()
+rbt = IntVar()
+
+cbt0 = Checkbutton(ws, text="Сохранить лог файл?", variable=cb0, onvalue=1, offvalue=0, command=isChecked, bg = bg_button_colour)
+cbt1 = Checkbutton(ws, text="Удалять все инфицированные файлы?", variable=cb1, onvalue=1, offvalue=0, command=isChecked, bg = bg_button_colour)
+cbt2 = Checkbutton(ws, text="Перемещать инфицированные файлы в указанную папку?", variable=cb2, onvalue=1, offvalue=0, command=isChecked, bg = bg_button_colour)
+
+btn0 = Button(ws, text='Выберете "Сохранить лог файл"', state=DISABLED, command=log_browse, bg = bg_button_colour)
+btn1 = Button(ws, text='Выберете путь', command=scan_browse, bg = bg_button_colour)
+btn2 = Button(ws, text='Выберете "Перемещать инфицированные файлы в указанную папку"', state=DISABLED, command=infest_browse, bg = bg_button_colour)
+btn3 = Button(ws, text='Scaning', command=scan, bg = bg_button_colour, relief=RAISED, bd=0)
+
+rbt0 = Radiobutton(text="Папку с вложенными папками", value=0, variable=rbt, bg = bg_button_colour)
+rbt1 = Radiobutton(text="Один файл", value=1, variable=rbt, bg = bg_button_colour)
+
+lb = Label(ws, text='...', bg = bg_app_colour)
+lb0 = Label(ws, text=' \n \n \n \n \n', bg = bg_app_colour)
+cbt0.grid(row=0, column=1)
+cbt1.grid(row=1, column=1)
+cbt2.grid(row=2, column=1)
+
+rbt0.grid(row=3, column=1)
+rbt1.grid(row=4, column=1)
+
+btn0.grid(row=0, column=0)
+btn1.grid(row=1, column=0)
+btn2.grid(row=2, column=0)
+btn3.grid(row=3, column=0)
+lb0.grid(row=5, column=0)
+lb.grid(row=6, column=0)
+ws.mainloop()
+```
